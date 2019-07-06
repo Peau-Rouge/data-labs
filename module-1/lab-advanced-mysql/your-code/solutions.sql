@@ -2,52 +2,56 @@
 # Challenge 1 - Most Profiting Authors
 "
 
-CREATE TABLE temp
-SELECT ord_num AS SaleNumber, sales.title_id, title, SUM(qty) AS SalesQty, price, advance, royalty
-FROM sales
-INNER JOIN titles
+"
+step 1: Calculate the royalties of each sales for each author
+"
+
+SELECT ord_num AS SaleNumber, sales.title_id, title, au_id,  price * SUM(sales.qty) * royalty/100 *royaltyper/100 AS Sales_Royalty
+FROM titles
+INNER JOIN sales
 ON sales.title_id = titles.title_id
-GROUP BY SaleNumber, sales.title_id, title, price, advance, royalty;
-
-Create table temp1
-SELECT titleauthor.title_id, au_id, royaltyper
-FROM sales
 INNER JOIN titleauthor
-ON sales.title_id = titleauthor.title_id;
+ON titles.title_id = titleauthor.title_id
+GROUP BY SaleNumber, sales.title_id, title, au_id;
 
 "
-step 1
-"
-SELECT au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, price * SalesQty * royalty/100 *royaltyper/100 AS Sales_Royalty
-From temp
-inner join temp1
-ON temp.title_id = temp1.title_id
-GROUP BY au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, Sales_Royalty;
-
-
-"
-step 2
-"
-SELECT au_id, title_id, title, price, advance, royalty, royaltyper, SUM(Sales_Royalty) AS TotalRoyalty
-From RoyaltySale
-GROUP BY au_id, title_id, title,price, advance, royalty, royaltyper;
-
-"
-step 3
+step 2: Aggregate the total royalties for each title for each author
 "
 
 Create table RoyaltySale
-SELECT au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, price * SalesQty * royalty/100 *royaltyper/100 AS Sales_Royalty
-From temp
-inner join temp1
-ON temp.title_id = temp1.title_id
-GROUP BY au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, Sales_Royalty;
+SELECT ord_num AS SaleNumber, sales.title_id, title, au_id,  price * SUM(sales.qty) * royalty/100 *royaltyper/100 AS Sales_Royalty
+FROM titles
+INNER JOIN sales
+ON sales.title_id = titles.title_id
+INNER JOIN titleauthor
+ON titles.title_id = titleauthor.title_id
+GROUP BY SaleNumber, sales.title_id, title, au_id;
 
 
-SELECT au_id, title_id, title, price, advance, royalty, royaltyper, SUM(Sales_Royalty) AS TotalRoyalty, SUM(Sales_Royalty)+advance AS Profits
+SELECT au_id, title_id,  SUM(Sales_Royalty) AS TotalRoyalty
 From RoyaltySale
-GROUP BY au_id, title_id, title,price, advance, royalty, royaltyper
-ORDER BY Profits Desc
+GROUP BY au_id, title_id;
+
+"
+step 3: Calculate the total profits of each author
+"
+
+Create Table Temp1
+SELECT au_id, title_id,  SUM(Sales_Royalty) AS TotalRoyalty
+From RoyaltySale
+GROUP BY au_id, title_id;
+
+SELECT Temp1.au_id, TotalRoyalty + titles.advance  AS Profit
+From Temp1
+INNER JOIN titles
+ON Temp1.title_id = titles.title_id
+GROUP BY Temp1.au_id;
+
+
+SELECT au_id, SUM(Profits) AS Total
+From temp3
+GROUP BY au_id
+ORDER BY Total DESC
 LIMIT 3;
 
 
@@ -55,34 +59,17 @@ LIMIT 3;
 # Challenge 2 - Alternative Solution
 "
 
-
-SELECT au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, price * SalesQty * royalty/100 *royaltyper/100 AS Sales_Royalty
-From
-(SELECT ord_num AS SaleNumber, sales.title_id, title, SUM(qty) AS SalesQty, price, advance, royalty FROM sales INNER JOIN titles ON sales.title_id = titles.title_id)
-INNER JOIN
-(SELECT titleauthor.title_id, au_id, royaltyper FROM sales INNER JOIN titleauthor ON sales.title_id = titleauthor.title_id);
-
-CREATE TABLE temp
-SELECT ord_num AS SaleNumber, sales.title_id, title, SUM(qty) AS SalesQty, price, advance, royalty
-FROM sales
-INNER JOIN titles
-ON sales.title_id = titles.title_id
-GROUP BY SaleNumber, sales.title_id, title, price, advance, royalty;
-
-Create table temp1
-SELECT titleauthor.title_id, au_id, royaltyper
-FROM sales
-INNER JOIN titleauthor
-ON sales.title_id = titleauthor.title_id;
-
-"
-step 1
-"
-SELECT au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, price * SalesQty * royalty/100 *royaltyper/100 AS Sales_Royalty
-From temp
-inner join temp1
-ON temp.title_id = temp1.title_id
-GROUP BY au_id, temp.title_id, title, SalesQty, price, advance, royalty, royaltyper, Sales_Royalty;
+SELECT au_id, SUM(Profits) AS Total
+FROM (
+	SELECT sales.title_id,au_id,  price * SUM(sales.qty) * royalty/100 *royaltyper/100 + advance AS Profits
+	FROM titles
+	INNER JOIN sales ON sales.title_id = titles.title_id
+	INNER JOIN titleauthor ON titles.title_id = titleauthor.title_id
+	GROUP BY sales.title_id, au_id
+) summary
+GROUP BY au_id
+ORDER BY Total DESC
+LIMIT 3;
 
 
 
@@ -90,9 +77,9 @@ GROUP BY au_id, temp.title_id, title, SalesQty, price, advance, royalty, royalty
 # Challenge 3
 "
 CREATE TABLE most_profiting_authors
-SELECT Author_ID, Profit
+SELECT au_id, Profit
 FROM Profits
-ORDER BY Profit Desc;
+ORDER BY Profits Desc;
 
 
 
