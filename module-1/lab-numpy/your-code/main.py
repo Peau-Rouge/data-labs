@@ -24,7 +24,7 @@ print(a)
 
 print(a)
 
-#5. Create a 5x2x3 3-dimensional array with all values equaling 1.
+#5. Create a 5x3x2 3-dimensional array with all values equaling 1.
 #Assign the array to variable "b"
 
 b = np.random.randint(1,2, size=(5,2,3))
@@ -222,6 +222,7 @@ array([[[ 'D',  'D',  'D',  'B',  'D'],
         [ 'B',  'D',   'A',  'D', 'D']]])
 Again, you don't need Numpy in this question.
 """
+<<<<<<< HEAD
 f = np.empty([2,3,5], dtype = np.unicode)
 
 f[d == d_mean] = 'C'
@@ -247,3 +248,5 @@ array([[['D', 'D', 'D', 'B', 'A'],
 
 
 
+=======
+>>>>>>> upstream/master
